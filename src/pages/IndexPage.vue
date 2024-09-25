@@ -1,47 +1,70 @@
 <template>
-  <q-page class="row items-center justify-evenly">
-    <example-component
-      title="Example component"
-      active
-      :todos="todos"
-      :meta="meta"
-    ></example-component>
+  <q-page class="column">
+    <h1 class="text-weight-thin text-center border-radius-inherit q-mx-">Olá, receba nossa NewsLetter</h1>
+    <div class="q-ma-lg text-weight-regular text-center main-content row ">
+      <q-img
+        src="newsletter_img.svg"
+        class="side-img col gt-sm"
+        spinner-color="primary"
+        spinner-size="82px"
+        alt="svg de uma mulher abrindo um gigante envelope com cartas saindo dele"
+
+      />
+      <article class="col side-content">
+        <p>
+          Uma newsletter é uma publicação enviada por e-mail para seus assinantes com o objetivo de compartilhar conteudos, notícias e informações sobre um determinado assunto
+        </p>
+        <p>
+          Ao se inscrever, você receberá semanalmente um resumo dos fatos mais importantes do cenário político mundial e nacional, diretamente no seu email
+        </p>
+        <div class="text-center">
+          <q-btn color="dark" icon="assignment" label="Inscreva-se" @click="onClick" />
+        </div>
+      </article>
+    </div>
+
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Todo, Meta } from 'components/models';
-import ExampleComponent from 'components/ExampleComponent.vue';
 
-defineOptions({
-  name: 'IndexPage'
-});
+import { useRouter } from 'vue-router';
 
-const todos = ref<Todo[]>([
-  {
-    id: 1,
-    content: 'ct1'
-  },
-  {
-    id: 2,
-    content: 'ct2'
-  },
-  {
-    id: 3,
-    content: 'ct3'
-  },
-  {
-    id: 4,
-    content: 'ct4'
-  },
-  {
-    id: 5,
-    content: 'ct5'
-  }
-]);
+const router = useRouter()
 
-const meta = ref<Meta>({
-  totalCount: 1200
-});
+const onClick =() => {
+  router.push('/register')
+}
+
 </script>
+
+<style scoped>
+h1 {
+  font-size: 2rem;
+}
+
+.main-content{
+  font-family:"Sofia Sans Extra Condensed", sans-serif ;
+  font-size: 1.5rem;
+
+}
+
+.side-content{
+  padding: 10px;
+  text-align: justify;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+
+}
+
+.side-img{
+  width: 400px;
+}
+
+@media (max-width: 768px){
+  .side-img{
+    width: 200px;
+  }
+}
+</style>
