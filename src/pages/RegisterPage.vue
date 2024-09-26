@@ -1,8 +1,14 @@
 <template>
   <q-page class="column text-center justify-center fullscreen q-mx-sm">
-    <div class="q-ma-auto register-form ">
+    <div class="q-ma-auto register-form">
       <h1 class="text-weight-medium">Inscreva-se</h1>
-      <q-form class="q-gutter-lg q-pa-lg">
+
+      <div v-if="errorMessage" class="q-mb-md">
+        <q-banner class="bg-red text-white" inline-actions>
+          {{ errorMessage }}
+        </q-banner>
+      </div>
+      <q-form class="q-gutter-lg q-pa-lg" @submit.prevent="handleSubmit">
         <q-input
           filled
           v-model="nome"
@@ -10,104 +16,161 @@
           stack-label
           :dense="dense"
           aria-required="true"
-          :rules="[val => !!val || 'Nome é obrigatório']" />
+          :rules="[(val) => !!val || 'Nome é obrigatório']"
+        />
+
         <q-input
           filled
+          type="email"
           v-model="email"
           label="E-mail"
           stack-label
           :dense="dense"
           aria-required="true"
-          :rules="[val => !!val || 'Nome é obrigatório']" />
+          :rules="[(val) => !!val || 'E-mail é obrigatório']"
+        />
         <div class="q-pa-sm justify-between q-ma-xl">
           <q-btn label="Voltar" @click="handleBack" color="dark q-mr-sm" />
-          <q-btn label="Inscreva-se" type="submit" @click="handleSubmit" color="dark q-ml-sm" />
+          <q-btn
+            label="Inscreva-se"
+            type="submit"
+            color="dark q-ml-sm"
+          />
         </div>
       </q-form>
+    </div>
+    <div>
+      <q-dialog
+        v-model="showSuccesModal"
+        persistent
+        transition-show="scale"
+        transition-hide="scale"
+      >
+        <q-card class="bg-teal text-white" style="width: 300px">
+          <q-card-section>
+            <div class="text-h6">Parabéns</div>
+            <span>Cadastro Realizado com Sucesso </span>
+          </q-card-section>
+        </q-card>
+      </q-dialog>
     </div>
   </q-page>
 </template>
 
-<script setup lang='ts'>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import cliente from 'app/http';
-import { error } from 'console';
-import IAssinantes from 'app/interface/IAsssinante';
+<script setup lang="ts">
+import { IAssinante } from "app/interface/IAssinante";
+import { Ref, ref } from "vue";
+import { useRouter } from "vue-router";
 
-const nome = ref('')
-const email = ref('')
-const dense = ref(false)
+const nome = ref("");
+const email = ref("");
+const dense = ref(false);
+const showSuccesModal = ref(false)
+const errorMessage = ref("")
 
-const router = useRouter()
+const router = useRouter();
 
-const handleSubmit = async (e: Event) => {
-  e.preventDefault();
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if(!nome.value || !email.value){
-    console.log('Favor preencher todos os campos')
+const hideMessage = (messageRef: Ref<string>) => {
+  setTimeout(()=> {messageRef.value = ""}, 2000)
+}
+
+const handleSubmit = () => {
+  errorMessage.value = ""
+
+//Validações
+  if(!nome.value){
+    errorMessage.value = "Nome é obrigatório";
+    hideMessage(errorMessage)
+    return
   }
 
+  if(!email.value){
+    errorMessage.value = "E-mail é obrigatório"
+    hideMessage(errorMessage)
+    return
+  }
+
+  if(!emailRegex.test(email.value)){
+    errorMessage.value = "E-mail inválido"
+    hideMessage(errorMessage)
+    return
+  }
+
+//Adiciona novo assinante
   try {
-    const assinantes : IAssinantes = {
-      nome : nome.value,
-      email: email.value
+    const storeAssinantes = localStorage.getItem('assinantes');
+    const assinantes: IAssinante[] = storeAssinantes ? JSON.parse(storeAssinantes) : [];
+    const emailExists = assinantes.some((assinante: IAssinante) => assinante.email === email.value)
+
+    if(emailExists){
+      errorMessage.value = "E-mail já cadastrado"
+      hideMessage(errorMessage)
+      return
     }
 
-    await cliente.post('/assinantes', assinantes)
-    console.log('Dados enviados com sucesso')
-  }catch(e){
-    console.error('Erro ao enviar dados', e)
+    assinantes.push({nome: nome.value , email: email.value})
+
+    localStorage.setItem('assinantes', JSON.stringify(assinantes))
+
+    showSuccesModal.value = true
+
+    setTimeout(() => {
+      showSuccesModal.value = false;
+      router.push('/')
+    }, 3000);
+
+  } catch (e) {
+    console.error("Erro ao enviar dados", e);
+    if(errorMessage.value === "" ){errorMessage.value = "Erro ao Salvar os Dados. Tente novamente"}
+    hideMessage(errorMessage)
   }
-}
+};
 
 const handleBack = () => {
-  router.push('/')
-}
-
+  router.push("/");
+};
 </script>
 
-
-
 <style scoped>
-h1{
+h1 {
   font-size: 1.5rem;
-  font-family: "Sofia Sans Extra Condensed", sans-serif ;
+  font-family: "Sofia Sans Extra Condensed", sans-serif;
 }
 
-.register-form{
+.register-form {
   background-color: white;
   border-radius: 5px;
-  border: solid black .01px;
+  border: solid black 0.01px;
 }
 
-@media (min-width: 500px ){
-  .register-form{
+@media (min-width: 500px) {
+  .register-form {
     width: 520px;
     margin: auto;
     padding: 40px;
   }
 
-  h1{
+  h1 {
     font-size: 2rem;
   }
 
-  .handlesButtons{
+  .handlesButtons {
     height: fit-content;
     padding: 10px;
   }
 }
 
-
-@media (min-width: 800px){
-  .register-form{
+@media (min-width: 800px) {
+  .register-form {
     width: 650px;
     height: 550px;
     display: flex;
     flex-direction: column;
   }
 
-  .handlesButtons{
+  .handlesButtons {
     margin-top: 10px;
   }
 }
